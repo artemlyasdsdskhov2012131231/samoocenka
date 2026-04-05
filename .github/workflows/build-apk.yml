@@ -49,7 +49,7 @@ jobs:
         yes | flet build apk --module-name app
     
     - name: Upload APK
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       if: success()
       with:
         name: samoocenka-apk
