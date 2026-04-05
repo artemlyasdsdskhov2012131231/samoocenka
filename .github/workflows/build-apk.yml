@@ -47,24 +47,42 @@ jobs:
     - name: Setup Android SDK tools
       run: |
         export ANDROID_SDK_ROOT=$ANDROID_HOME
-        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        
+        echo "=== Finding sdkmanager ==="
+        find $ANDROID_HOME -name "sdkmanager" -type f 2>/dev/null || echo "sdkmanager not found in ANDROID_HOME"
+        
+        # Create directory structure
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest/bin
         mkdir -p $ANDROID_HOME/tools/bin
         
-        # Create proper directory structure for buildozer
-        if [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
-          # Copy sdkmanager to legacy location that buildozer expects
-          cp $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
-          cp $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
-          chmod +x $ANDROID_HOME/tools/bin/*
-        fi
+        # Find and copy sdkmanager from wherever it is
+        SDKMANAGER_PATH=$(find $ANDROID_HOME -name "sdkmanager" -type f 2>/dev/null | head -1)
         
-        # Verify sdkmanager exists
-        if [ ! -f "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
-          echo "ERROR: sdkmanager not found at $ANDROID_HOME/tools/bin/sdkmanager"
-          echo "Contents of $ANDROID_HOME:"
-          find $ANDROID_HOME -name "sdkmanager" 2>/dev/null
+        if [ -z "$SDKMANAGER_PATH" ]; then
+          echo "ERROR: sdkmanager not found anywhere in $ANDROID_HOME"
+          echo "=== Directory structure ==="
+          find $ANDROID_HOME -type d | head -20
           exit 1
         fi
+        
+        echo "Found sdkmanager at: $SDKMANAGER_PATH"
+        
+        # Get the directory containing sdkmanager
+        SDKMANAGER_DIR=$(dirname $SDKMANAGER_PATH)
+        
+        # Copy all binaries from that directory
+        cp $SDKMANAGER_DIR/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
+        cp $SDKMANAGER_DIR/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
+        chmod +x $ANDROID_HOME/tools/bin/*
+        
+        # Verify
+        if [ ! -f "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
+          echo "ERROR: Failed to copy sdkmanager"
+          exit 1
+        fi
+        
+        echo "SUCCESS: sdkmanager copied to $ANDROID_HOME/tools/bin/sdkmanager"
+        ls -la $ANDROID_HOME/tools/bin/
     
     - name: Build APK
       run: |
