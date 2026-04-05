@@ -46,7 +46,7 @@ jobs:
     - name: Build APK with Flet CLI
       run: |
         cd ${{ github.workspace }}
-        yes | flet build apk
+        yes | flet build apk --module-name app
     
     - name: Upload APK
       uses: actions/upload-artifact@v5
