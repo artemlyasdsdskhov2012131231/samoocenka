@@ -44,45 +44,51 @@ jobs:
         echo "e4054a96b58076fb1a7309a5234df12e73b381b1" > $HOME/.android/google-gdk-license
         echo "33b6a2b64607f11724f6251c3ebf77060cde20cc" > $HOME/.android/mips-android-sysimage-license
     
+    - name: Download Android SDK cmdline-tools
+      run: |
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        mkdir -p $ANDROID_HOME
+        
+        echo "Downloading Android SDK cmdline-tools..."
+        cd $ANDROID_HOME
+        
+        # Download cmdline-tools (Linux version)
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        
+        # Extract to cmdline-tools/latest
+        mkdir -p cmdline-tools
+        unzip -q commandlinetools-linux-11076708_latest.zip -d cmdline-tools/
+        
+        # Rename 'cmdline-tools' folder to 'latest' if it exists
+        if [ -d "cmdline-tools/cmdline-tools" ]; then
+          rm -rf cmdline-tools/latest
+          mv cmdline-tools/cmdline-tools cmdline-tools/latest
+        fi
+        
+        # Clean up zip
+        rm -f commandlinetools-linux-11076708_latest.zip
+        
+        echo "cmdline-tools downloaded and extracted"
+        ls -la $ANDROID_HOME/cmdline-tools/latest/bin/ 2>/dev/null || echo "cmdline-tools/latest/bin not found"
+    
     - name: Setup Android SDK tools
       run: |
         export ANDROID_SDK_ROOT=$ANDROID_HOME
         
-        echo "=== Finding sdkmanager ==="
-        find $ANDROID_HOME -name "sdkmanager" -type f 2>/dev/null || echo "sdkmanager not found in ANDROID_HOME"
-        
-        # Create directory structure
-        mkdir -p $ANDROID_HOME/cmdline-tools/latest/bin
+        echo "=== Setting up SDK tools ==="
         mkdir -p $ANDROID_HOME/tools/bin
         
-        # Find and copy sdkmanager from wherever it is
-        SDKMANAGER_PATH=$(find $ANDROID_HOME -name "sdkmanager" -type f 2>/dev/null | head -1)
-        
-        if [ -z "$SDKMANAGER_PATH" ]; then
-          echo "ERROR: sdkmanager not found anywhere in $ANDROID_HOME"
-          echo "=== Directory structure ==="
-          find $ANDROID_HOME -type d | head -20
+        # Copy sdkmanager from cmdline-tools/latest/bin to tools/bin
+        if [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+          cp $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
+          cp $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
+          chmod +x $ANDROID_HOME/tools/bin/*
+          echo "SUCCESS: sdkmanager setup complete"
+          ls -la $ANDROID_HOME/tools/bin/
+        else
+          echo "ERROR: sdkmanager not found in cmdline-tools"
           exit 1
         fi
-        
-        echo "Found sdkmanager at: $SDKMANAGER_PATH"
-        
-        # Get the directory containing sdkmanager
-        SDKMANAGER_DIR=$(dirname $SDKMANAGER_PATH)
-        
-        # Copy all binaries from that directory
-        cp $SDKMANAGER_DIR/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
-        cp $SDKMANAGER_DIR/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
-        chmod +x $ANDROID_HOME/tools/bin/*
-        
-        # Verify
-        if [ ! -f "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
-          echo "ERROR: Failed to copy sdkmanager"
-          exit 1
-        fi
-        
-        echo "SUCCESS: sdkmanager copied to $ANDROID_HOME/tools/bin/sdkmanager"
-        ls -la $ANDROID_HOME/tools/bin/
     
     - name: Build APK
       run: |
