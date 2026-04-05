@@ -38,22 +38,22 @@ jobs:
         echo "Using system Android SDK"
         ls -la /usr/local/lib/android/sdk/ | head -15
     
-    - name: Install dependencies
+    - name: Install Flutter dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flet
+        sudo apt-get update
+        sudo apt-get install -y git curl unzip
     
     - name: Build APK with Flet CLI
       run: |
         cd ${{ github.workspace }}
-        flet build apk --module-name app --output-dir build
+        flet build apk
     
     - name: Upload APK
       uses: actions/upload-artifact@v5
       if: success()
       with:
         name: samoocenka-apk
-        path: build/*.apk
+        path: '**/*.apk'
         retention-days: 30
     
     - name: Create Release
