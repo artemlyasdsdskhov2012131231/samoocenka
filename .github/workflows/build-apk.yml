@@ -49,10 +49,21 @@ jobs:
         export ANDROID_SDK_ROOT=$ANDROID_HOME
         mkdir -p $ANDROID_HOME/cmdline-tools/latest
         mkdir -p $ANDROID_HOME/tools/bin
-        # Link sdkmanager to expected location for buildozer
+        
+        # Create proper directory structure for buildozer
         if [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
-          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
-          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
+          # Copy sdkmanager to legacy location that buildozer expects
+          cp $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
+          cp $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
+          chmod +x $ANDROID_HOME/tools/bin/*
+        fi
+        
+        # Verify sdkmanager exists
+        if [ ! -f "$ANDROID_HOME/tools/bin/sdkmanager" ]; then
+          echo "ERROR: sdkmanager not found at $ANDROID_HOME/tools/bin/sdkmanager"
+          echo "Contents of $ANDROID_HOME:"
+          find $ANDROID_HOME -name "sdkmanager" 2>/dev/null
+          exit 1
         fi
     
     - name: Build APK
