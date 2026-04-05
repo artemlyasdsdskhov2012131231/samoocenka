@@ -44,6 +44,17 @@ jobs:
         echo "e4054a96b58076fb1a7309a5234df12e73b381b1" > $HOME/.android/google-gdk-license
         echo "33b6a2b64607f11724f6251c3ebf77060cde20cc" > $HOME/.android/mips-android-sysimage-license
     
+    - name: Setup Android SDK tools
+      run: |
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        mkdir -p $ANDROID_HOME/tools/bin
+        # Link sdkmanager to expected location for buildozer
+        if [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager $ANDROID_HOME/tools/bin/avdmanager 2>/dev/null || true
+        fi
+    
     - name: Build APK
       run: |
         cd ${{ github.workspace }}
