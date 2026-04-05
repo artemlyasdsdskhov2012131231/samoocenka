@@ -33,6 +33,12 @@ jobs:
         pip install buildozer cython
         pip install -r requirements.txt
     
+    - name: Accept Android SDK licenses
+      run: |
+        mkdir -p $HOME/.android
+        echo "count=0" > $HOME/.android/repositories.cfg
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+    
     - name: Build APK
       run: |
         cd ${{ github.workspace }}
