@@ -1011,19 +1011,27 @@ def main(page: ft.Page):
     platform = "android"  # Default to android for safety
     
     try:
-        print("DEBUG: main() called")
+        print("DEBUG: main() called - Application starting up")
+        
+        # Platform detection with safe defaults
         try:
             platform = get_platform_name()
-            print(f"DEBUG: Running on {platform}")
+            print(f"DEBUG: Platform detected: {platform}")
         except Exception as e:
-            print(f"WARNING: Platform detection failed: {e}, defaulting to 'android'")
+            print(f"WARNING: Platform detection failed: {e}")
+            import traceback
+            traceback.print_exc()
         
-        # Ensure storage is initialized before anything else
+        # Ensure storage is initialized first - CRITICAL
+        print("DEBUG: Initializing storage directories...")
         try:
             ensure_storage_dirs()
-            print("DEBUG: storage dirs initialized")
+            print("DEBUG: Storage initialization SUCCESS")
         except Exception as e:
-            print(f"WARNING: Failed to initialize storage: {e}")
+            print(f"CRITICAL: Storage initialization FAILED: {e}")
+            import traceback
+            traceback.print_exc()
+            # Continue anyway - might still work
         
         # Configure page with safe defaults
         try:

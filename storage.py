@@ -39,47 +39,23 @@ def get_app_storage_dir() -> Path:
     """
     
     if IS_ANDROID:
-        # ==== ПРИВАТНОЕ ХРАНИЛИЩЕ FLET (РЕКОМЕНДУЕМЫЙ СПОСОБ) ====
-        # Это единственный способ, который гарантировано работает даже на защищённых устройствах
+        # ==== ПРИВАТНОЕ ХРАНИЛИЩЕ ANDROID (ПРОСТОЙ СПОСОБ) ====
+        try:
+            # Самый надежный способ: прямой путь к приватному хранилищу
+            private_dir = Path("/data/data/org.test.samoocenka/files")
+            private_dir.mkdir(parents=True, exist_ok=True)
+            storage_path = private_dir / APP_NAME
+            return storage_path
+        except (OSError, ValueError):
+            pass
+        
+        # Fallback: использовать стандартную Android директорию
         try:
             import flet as ft
-            from flet import Page
-            
-            # Попытка получить текущую страницу для доступа к свойствам
-            try:
-                # Метод 1A: Через текущую страницу (если мы внутри Flet контекста)
-                from flet.core import get_active_instances
-                instances = get_active_instances()
-                if instances:
-                    page = instances[0]
-                    if hasattr(page, 'app_storage_dir') and page.app_storage_dir:
-                        app_dir = Path(page.app_storage_dir)
-                        if app_dir and app_dir != Path("/"):
-                            return app_dir
-            except (ImportError, IndexError, AttributeError, RuntimeError):
-                pass
-            
-            # Метод 1B: Прямой доступ к flet.app_storage_dir
-            if hasattr(ft, 'app_storage_dir'):
-                try:
-                    app_dir_str = ft.app_storage_dir
-                    if app_dir_str and isinstance(app_dir_str, str) and app_dir_str != "/":
-                        app_dir = Path(app_dir_str)
-                        return app_dir
-                except (TypeError, ValueError, RuntimeError, AttributeError):
-                    pass
-            
-            # Метод 2: Через document_dir если доступно
-            if hasattr(ft, 'document_dir'):
-                try:
-                    doc_dir = Path(ft.document_dir)
-                    if doc_dir and doc_dir != Path("/"):
-                        return doc_dir
-                except (TypeError, ValueError):
-                    pass
-                    
-        except (ImportError, AttributeError) as e:
-            print(f"DEBUG: Flet import failed for storage: {e}")
+            if hasattr(ft, 'app_storage_dir') and ft.app_storage_dir:
+                return Path(ft.app_storage_dir) / APP_NAME
+        except Exception:
+            pass
         
         # ==== FALLBACK: ИСПОЛЬЗОВАНИЕ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ====
         # На некоторых Android системах хранилище доступно через переменные окружения
